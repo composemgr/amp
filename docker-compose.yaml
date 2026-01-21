@@ -1,0 +1,27 @@
+# nginx proxy address - http://172.17.0.1:8097
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "1"
+
+services:
+  amp:
+    image: mitchtalmadge/amp-dockerized:latest
+    container_name: amp-app
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - amp
+    ports:
+      - "8097:8080"
+    environment:
+      TZ: ${TZ:-America/New_York}
+    volumes:
+      - ./rootfs/config/amp:/config
+      - ./rootfs/data/amp:/data
+
+networks:
+  amp:
+    external: false
