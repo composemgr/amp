@@ -19,8 +19,8 @@ services:
     environment:
       TZ: ${TZ:-America/New_York}
     volumes:
-      - ./rootfs/config/amp:/config
-      - ./rootfs/data/amp:/data
+      - ./volumes/config/amp:/config
+      - ./volumes/data/amp:/data
 
 networks:
   amp:
