@@ -15,12 +15,32 @@ services:
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     logging: *default-logging
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://amp-app:8080'
+      - 'cloudflare.hostname=amp.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.amp-app.entrypoints=http'
+      - 'traefik.http.routers.amp-app-secure.tls=true'
+      - 'traefik.http.routers.amp-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.amp-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.amp-app.middlewares=amp-app-https-redirect'
+      - 'traefik.http.routers.amp-app-secure.entrypoints=https'
+      - 'traefik.http.routers.amp-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.amp-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.amp-app-secure.service=amp-app'
+      - 'traefik.http.services.amp-app.loadbalancer.server.port=8080'
     networks:
       - amp
+      - proxy
+      - cloudflare
     ports:
       - "172.17.0.1:8097:8080"
     environment:
       TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: amp-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     volumes:
       - ./volumes/config/amp:/config
       - ./volumes/data/amp:/data
@@ -28,3 +48,7 @@ services:
 networks:
   amp:
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
