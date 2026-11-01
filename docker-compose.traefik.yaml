@@ -1,0 +1,45 @@
+name: amp
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: mitchtalmadge/amp-dockerized:latest
+    container_name: amp-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: amp-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    volumes:
+      - './volumes/config/amp:/config'
+      - './volumes/data/amp:/data'
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.amp-app.entrypoints=http'
+      - 'traefik.http.routers.amp-app.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.amp-app.middlewares=amp-app-https-redirect'
+      - 'traefik.http.middlewares.amp-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.amp-app-secure.entrypoints=https'
+      - 'traefik.http.routers.amp-app-secure.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.amp-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.amp-app-secure.service=amp-app'
+      - 'traefik.http.services.amp-app.loadbalancer.server.port=8080'
+    networks:
+      - amp
+      - traefik
+
+networks:
+  amp:
+    name: amp
+    external: false
+  traefik:
+    external: true

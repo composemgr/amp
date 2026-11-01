@@ -1,54 +1,34 @@
-# nginx proxy address - http://172.17.0.1:8097
+# nginx proxy address - http://172.17.0.1:64107
 
 name: amp
 x-logging: &default-logging
-  driver: json-file
   options:
-    max-size: "5m"
-    max-file: "1"
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
 
 services:
-  amp:
+  app:
     image: mitchtalmadge/amp-dockerized:latest
-    pull_policy: always
     container_name: amp-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
+    pull_policy: always
     logging: *default-logging
-    labels:
-      - 'traefik.enable=true'
-      - 'cloudflare.enable=true'
-      - 'traefik.docker.network=proxy'
-      - 'cloudflare.service=http://amp-app:8080'
-      - 'cloudflare.hostname=amp.${CLOUDFLARE_ZONE_NAME:-}'
-      - 'traefik.http.routers.amp-app.entrypoints=http'
-      - 'traefik.http.routers.amp-app-secure.tls=true'
-      - 'traefik.http.routers.amp-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.middlewares.amp-app-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.amp-app.middlewares=amp-app-https-redirect'
-      - 'traefik.http.routers.amp-app-secure.entrypoints=https'
-      - 'traefik.http.routers.amp-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.routers.amp-app-secure.tls.certresolver=cloudflare'
-      - 'traefik.http.routers.amp-app-secure.service=amp-app'
-      - 'traefik.http.services.amp-app.loadbalancer.server.port=8080'
-    networks:
-      - amp
-      - proxy
-      - cloudflare
-    ports:
-      - "172.17.0.1:8097:8080"
     environment:
       TZ: ${TZ:-America/New_York}
       CONTAINER_NAME: amp-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    ports:
+      - '172.17.0.1:64107:8080'
     volumes:
-      - ./volumes/config/amp:/config
-      - ./volumes/data/amp:/data
+      - './volumes/config/amp:/config'
+      - './volumes/data/amp:/data'
+    networks:
+      - amp
 
 networks:
   amp:
+    name: amp
     external: false
-  proxy:
-    external: true
-  cloudflare:
-    external: true
