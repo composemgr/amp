@@ -18,6 +18,12 @@ services:
       TZ: ${TZ:-America/New_York}
       CONTAINER_NAME: amp-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    healthcheck:
+      test: ['CMD', 'curl', '-s', '-o', '/dev/null', '--max-time', '5', 'http://127.0.0.1:8080/']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     volumes:
       - './volumes/config/amp:/config'
       - './volumes/data/amp:/data'
